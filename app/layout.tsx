@@ -21,7 +21,9 @@ export default function RootLayout({
       <head>
           <link rel="icon" href="/favicon.png" sizes="any" />
       </head>
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className + " min-h-screen flex flex-col bg-black text-white"}>
+        {children}
+      </body>
     </html>
   )
 }

@@ -8,7 +8,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Download, Save, Clock, AlertCircle } from "lucide-react"
+import { ArrowLeft, Download, Save, Clock, AlertCircle,Copy } from "lucide-react"
 import { getSharedText, updateSharedText, getTextStats } from "../actions"
 
 export default function ReceivePage() {
@@ -24,6 +24,7 @@ export default function ReceivePage() {
   const [currentCode, setCurrentCode] = useState("")
   const [expiresAt, setExpiresAt] = useState<string | null>(null)
   const [timeLeft, setTimeLeft] = useState<string>("")
+  const [isCopied, setIsCopied] = useState(false)
 
   // Auto-load text if code is provided in URL
   useEffect(() => {
@@ -56,6 +57,25 @@ export default function ReceivePage() {
 
     return () => clearInterval(interval)
   }, [expiresAt])
+
+  const handleCopy = async () => {
+  if (!text.trim()) return
+  
+  try {
+    await navigator.clipboard.writeText(text)
+    setIsCopied(true)
+    setTimeout(() => setIsCopied(false), 2000)
+  } catch (error) {
+    const textArea = document.createElement('textarea')
+    textArea.value = text
+    document.body.appendChild(textArea)
+    textArea.select()
+    document.execCommand('copy')
+    document.body.removeChild(textArea)
+    setIsCopied(true)
+    setTimeout(() => setIsCopied(false), 2000)
+  }
+  }
 
   const handleReceive = async (codeToUse?: string) => {
     const targetCode = codeToUse || code
@@ -164,7 +184,7 @@ export default function ReceivePage() {
           </div>
         </nav>
 
-        <main className="max-w-4xl mx-auto px-6 py-8 min-h-[calc(100vh-200px)]">
+        <main className="max-w-4xl flex flex-col justify-center mx-auto px-6 py-8 min-h-[calc(100vh-200px)]">
           {!text ? (
             <div className="space-y-6">
               <div className="text-center space-y-2">
@@ -222,20 +242,31 @@ export default function ReceivePage() {
                     )}
                   </div>
                 </div>
-                <Button
-                  onClick={() => {
-                    setText("")
-                    setCode("")
-                    setCurrentCode("")
-                    setExpiresAt(null)
-                    setIsEditing(false)
-                    setError("")
-                  }}
-                  variant="outline"
-                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                >
-                  Access Another
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => {
+                      setText("")
+                      setCode("")
+                      setCurrentCode("")
+                      setExpiresAt(null)
+                      setIsEditing(false)
+                      setError("")
+                    }}
+                    variant="outline"
+                    className="border-blue-600 text-blue-300 hover:bg-blue-800"
+                  >
+                    Access Another
+                  </Button>
+                  <Button
+                    onClick={handleCopy}
+                    disabled={!text.trim()}
+                    variant="outline"
+                    className="border-black text-gray-300 hover:bg-gray-800"
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    {isCopied ? "Copied!" : "Copy"}
+                  </Button>
+                </div>
               </div>
 
               <div className="bg-gray-900 border border-gray-800 rounded-lg">
@@ -267,20 +298,6 @@ export default function ReceivePage() {
             </div>
           )}
         </main>
-
-        <footer className="border-t border-gray-800 mt-20">
-          <div className="max-w-6xl mx-auto px-6 py-8">
-            <div className="text-center">
-              <p
-                className="text-gray-400 font-medium tracking-wide"
-                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-              >
-                Made with <span className="text-red-500 animate-pulse">❤️</span> by{" "}
-                <span className="text-white font-semibold">Akshit Suthar</span>
-              </p>
-            </div>
-          </div>
-        </footer>
       </div>
     </div>
   )

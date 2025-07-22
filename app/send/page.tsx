@@ -188,20 +188,6 @@ export default function SendPage() {
             </div>
           )}
         </main>
-
-        <footer className="border-t border-gray-800 mt-20">
-          <div className="max-w-6xl mx-auto px-6 py-8">
-            <div className="text-center">
-              <p
-                className="text-gray-400 font-medium tracking-wide"
-                style={{ fontFamily: "Inter, system-ui, sans-serif" }}
-              >
-                made with <span className="text-red-500 animate-pulse">❤️</span> by{" "}
-                <span className="text-white font-semibold">Akshit Suthar</span>
-              </p>
-            </div>
-          </div>
-        </footer>
       </div>
     </div>
   )

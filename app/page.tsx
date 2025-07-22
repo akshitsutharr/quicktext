@@ -70,21 +70,20 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        </main>
-
-        <footer className="border-t border-gray-800 mt-20">
-          <div className="max-w-6xl mx-auto px-6 py-8">
+          <div className="max-w-6xl mx-auto px-6 pt-16 pb-8">
             <div className="text-center">
               <p
                 className="text-gray-400 font-medium tracking-wide"
                 style={{ fontFamily: "Inter, system-ui, sans-serif" }}
               >
                 Made with <span className="text-red-500 animate-pulse">❤️</span> by{" "}
-                <span className="text-white font-semibold">Akshit Suthar</span>
+                <a href="https://github.com/akshitsuthar" target="_blank" rel="noopener noreferrer">
+                  <span className="text-white font-semibold"> Akshit Suthar</span>
+                </a>
               </p>
             </div>
           </div>
-        </footer>
+        </main>
       </div>
     </div>
   )
