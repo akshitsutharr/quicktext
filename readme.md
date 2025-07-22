@@ -1,5 +1,20 @@
 # QuickText - Instant Text Sharing Platform
-## [QuickText Now](https://quicktextt.vercel.app)
+## [QuickText DEMO](https://quicktextt.vercel.app)
+
+## Screenshot
+<table>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/scr1.png" width="250"/></td>
+    <td><img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/scr2.png" width="250"/></td>
+    <td><img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/scr3.png" width="250"/></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/src4.png" width="250"/></td>
+    <td><img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/src5.png" width="250"/></td>
+    <td><img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/src6.png" width="250"/></td>
+  </tr>
+</table>
+
 
 
 ---
