@@ -7,3 +7,4 @@ Host: https://quicktextt.vercel.app
 
 # Sitemaps
 Sitemap: https://quicktextt.vercel.app/sitemap.xml
+Sitemap: https://quicktextt.vercel.app/sitemap-0.xml
