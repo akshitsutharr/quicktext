@@ -12,7 +12,7 @@ export function Footer() {
             </span>{" "}
             by{" "}
             <a 
-              href="https://github.com/akshitsuthar" 
+              href="https://github.com/akshitsutharr" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-white font-semibold hover:text-blue-400 transition-colors duration-300 hover:underline"
