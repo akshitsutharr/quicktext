@@ -1,0 +1,9 @@
+# *
+User-agent: *
+Allow: /
+
+# Host
+Host: https://quicktextt.vercel.app
+
+# Sitemaps
+Sitemap: https://quicktextt.vercel.app/sitemap.xml
