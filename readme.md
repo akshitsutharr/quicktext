@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/favicon.ico" alt="QuickText Logo" width="120" style="margin-bottom: 20px; border-radius: 20px" />
+<img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/favicon.png" alt="QuickText Logo" width="120" style="margin-bottom: 20px; border-radius: 20px" />
 
-# 🚀 QuickText
+# QuickText
 **The Ultimate Ephemeral Sharing Platform**
 
 [![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
