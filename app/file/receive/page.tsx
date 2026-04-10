@@ -5,7 +5,14 @@ import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Download, FileBox, AlertCircle } from "lucide-react"
-import { getSharedFile } from "@/app/actions/fileActions"
+import { getSharedFiles } from "@/app/actions/fileActions"
+
+type SharedFile = {
+  file_name: string
+  file_url: string
+  size: number
+  expires_at: string
+}
 
 function FileReceiver() {
   const searchParams = useSearchParams()
@@ -14,7 +21,7 @@ function FileReceiver() {
   const [code, setCode] = useState(initialCode)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
-  const [fileDetails, setFileDetails] = useState<{ file_name: string; file_url: string; size: number; expires_at: string } | null>(null)
+  const [fileDetails, setFileDetails] = useState<SharedFile[] | null>(null)
 
   useEffect(() => {
     if (initialCode && initialCode.length === 5) {
@@ -32,11 +39,11 @@ function FileReceiver() {
     setError("")
 
     try {
-      const data = await getSharedFile(code)
-      if (data) {
+      const data = await getSharedFiles(code)
+      if (data && data.length > 0) {
         setFileDetails(data)
       } else {
-        setError("File not found or has expired")
+        setError("Files not found or have expired")
       }
     } catch (e) {
       setError("An error occurred while fetching the file")
@@ -60,6 +67,9 @@ function FileReceiver() {
     return `${m} minutes left`
   }
 
+  const totalSize = (fileDetails || []).reduce((sum, file) => sum + file.size, 0)
+  const expiryLabel = fileDetails?.[0] ? getTimeLeft(fileDetails[0].expires_at) : ""
+
   return (
     <div className="max-w-xl mx-auto mt-8 relative z-10 w-full px-4">
       <Link href="/" className="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-8 group">
@@ -68,7 +78,7 @@ function FileReceiver() {
       </Link>
 
       <h1 className="text-3xl sm:text-4xl font-bold mb-2 tracking-tight">Receive File</h1>
-      <p className="text-gray-400 mb-8">Enter the 5-digit file code to access and download the securely shared file.</p>
+      <p className="text-gray-400 mb-8">Enter the 5-digit file code to access and download securely shared files.</p>
 
       {!fileDetails ? (
         <div className="bg-[#111] border border-gray-800 rounded-3xl p-6 sm:p-8">
@@ -110,32 +120,39 @@ function FileReceiver() {
       ) : (
         <div className="bg-[#111] border border-gray-800 rounded-3xl p-8 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
-          
-          <div className="flex items-start space-x-6">
+
+          <div className="flex items-start space-x-6 mb-6">
             <div className="w-16 h-16 bg-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center shrink-0">
                <FileBox size={32} />
             </div>
             <div className="overflow-hidden">
-               <h3 className="text-2xl font-bold truncate pr-4 text-white mb-1" title={fileDetails.file_name}>{fileDetails.file_name}</h3>
+               <h3 className="text-2xl font-bold truncate pr-4 text-white mb-1">{fileDetails.length} {fileDetails.length === 1 ? "File" : "Files"} Ready</h3>
                <div className="flex items-center space-x-3 text-sm text-gray-400 mb-6 font-medium">
-                  <span className="bg-gray-800 px-3 py-1 rounded-full text-gray-300">{formatSize(fileDetails.size)}</span>
+                  <span className="bg-gray-800 px-3 py-1 rounded-full text-gray-300">{formatSize(totalSize)}</span>
                   <span className="flex items-center text-amber-500/90 text-xs">
                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse mr-2" />
-                     Expires in {getTimeLeft(fileDetails.expires_at)}
+                     Expires in {expiryLabel}
                   </span>
                </div>
             </div>
           </div>
-          
-          <a href={fileDetails.file_url} target="_blank" rel="noopener noreferrer" className="block w-full">
-            <Button className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl text-lg shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all flex items-center justify-center space-x-2">
-              <Download size={20} />
-              <span>Download Securely</span>
-            </Button>
-          </a>
+
+          <div className="space-y-3">
+            {fileDetails.map((file, index) => (
+              <a key={`${file.file_name}-${index}`} href={file.file_url} target="_blank" rel="noopener noreferrer" className="block w-full">
+                <Button className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all flex items-center justify-between px-4">
+                  <span className="truncate text-left pr-3">{file.file_name}</span>
+                  <span className="flex items-center gap-2 shrink-0">
+                    <span className="text-xs text-blue-100/90">{formatSize(file.size)}</span>
+                    <Download size={18} />
+                  </span>
+                </Button>
+              </a>
+            ))}
+          </div>
           
           <button onClick={() => setFileDetails(null)} className="mt-6 text-sm text-gray-500 hover:text-white transition-colors block text-center w-full focus:outline-none">
-            Access a different file
+            Access a different code
           </button>
         </div>
       )}

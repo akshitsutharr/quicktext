@@ -22,6 +22,19 @@ function generateCode(): string {
   return result
 }
 
+type ShareFileInput = {
+  fileName: string
+  fileKey: string
+  size: number
+}
+
+type SharedFileResult = {
+  file_name: string
+  file_url: string
+  size: number
+  expires_at: string
+}
+
 export async function generatePresignedUrl(fileName: string, contentType: string, size: number) {
   // Enforce Max 100MB
   if (size > 100 * 1024 * 1024) {
@@ -44,8 +57,12 @@ export async function generatePresignedUrl(fileName: string, contentType: string
   return { signedUrl, fileKey }
 }
 
-export async function completeFileShare(fileName: string, fileKey: string, size: number): Promise<string> {
+export async function completeFileShare(files: ShareFileInput[]): Promise<string> {
   try {
+    if (!files.length) {
+      throw new Error("No files provided")
+    }
+
     await cleanupExpiredFiles()
 
     let code = generateCode()
@@ -64,15 +81,15 @@ export async function completeFileShare(fileName: string, fileKey: string, size:
     const expiresAt = new Date()
     expiresAt.setHours(expiresAt.getHours() + 2) // Auto-delete after 2 hours
 
-    const publicUrl = `${process.env.R2_PUBLIC_URL}/${fileKey}`
-
-    const { error } = await supabase.from("shared_files").insert({
+    const payload = files.map((file) => ({
       code,
-      file_name: fileName,
-      file_url: publicUrl,
-      size,
+      file_name: file.fileName,
+      file_url: `${process.env.R2_PUBLIC_URL}/${file.fileKey}`,
+      size: file.size,
       expires_at: expiresAt.toISOString(),
-    })
+    }))
+
+    const { error } = await supabase.from("shared_files").insert(payload)
 
     if (error) {
       console.error("Supabase insert error:", error)
@@ -86,7 +103,7 @@ export async function completeFileShare(fileName: string, fileKey: string, size:
   }
 }
 
-export async function getSharedFile(code: string) {
+export async function getSharedFiles(code: string): Promise<SharedFileResult[] | null> {
   try {
     await cleanupExpiredFiles()
 
@@ -94,42 +111,44 @@ export async function getSharedFile(code: string) {
       .from("shared_files")
       .select("file_name, file_url, size, expires_at")
       .eq("code", code.toUpperCase())
-      .single()
+      .order("created_at", { ascending: true })
 
-    if (error || !data) return null
+    if (error || !data || data.length === 0) return null
 
     const now = new Date()
-    const expiresAt = new Date(data.expires_at)
+    const activeFiles = data.filter((file) => now <= new Date(file.expires_at))
 
-    if (now > expiresAt) {
-      await deleteFile(code.toUpperCase())
+    if (!activeFiles.length) {
+      await deleteFilesByCode(code.toUpperCase())
       return null
     }
 
-    // Generate a secure presigned GET URL for downloading
-    const fileKey = data.file_url.split('/').pop()
-    if (fileKey) {
+    const filesWithSignedUrls = await Promise.all(activeFiles.map(async (file) => {
+      // Generate secure presigned GET URLs for downloading
+      const fileKey = file.file_url.split('/').pop()
+      if (!fileKey) return file
+
         const command = new GetObjectCommand({
             Bucket: process.env.R2_BUCKET_NAME!,
             Key: fileKey,
-            ResponseContentDisposition: `attachment; filename="${data.file_name}"`
+            ResponseContentDisposition: `attachment; filename="${file.file_name}"`
         })
         const signedUrl = await getSignedUrl(S3, command, { expiresIn: 3600 })
-        data.file_url = signedUrl
-    }
+        return { ...file, file_url: signedUrl }
+    }))
 
-    return data
+    return filesWithSignedUrls
   } catch (error) {
     console.error("Error getting shared file:", error)
     return null
   }
 }
 
-async function deleteFile(code: string) {
+async function deleteFilesByCode(code: string) {
   try {
-    const { data } = await supabase.from("shared_files").select("file_url").eq("code", code).single()
-    if (data && data.file_url) {
-      const fileKey = data.file_url.split('/').pop()
+    const { data } = await supabase.from("shared_files").select("file_url").eq("code", code)
+    for (const file of data || []) {
+      const fileKey = file.file_url.split('/').pop()
       if (fileKey) {
         await S3.send(
           new DeleteObjectCommand({
@@ -150,7 +169,7 @@ export async function cleanupExpiredFiles() {
     const now = new Date().toISOString()
     const { data: expiredFiles, error: fetchError } = await supabase
       .from("shared_files")
-      .select("code, file_url")
+      .select("id, file_url")
       .lt("expires_at", now)
 
     if (fetchError) return
@@ -164,7 +183,7 @@ export async function cleanupExpiredFiles() {
             console.error("Failed to delete expired R2 object", e)
         }
       }
-      await supabase.from("shared_files").delete().eq("code", file.code)
+      await supabase.from("shared_files").delete().eq("id", file.id)
     }
   } catch (error) {
     console.error("Error in cleanupExpiredFiles:", error)

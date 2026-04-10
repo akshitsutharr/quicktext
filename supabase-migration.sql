@@ -11,9 +11,10 @@ CREATE TABLE public.shared_files (
     size integer NOT NULL,
     created_at timestamp with time zone NOT NULL DEFAULT now(),
     expires_at timestamp with time zone NOT NULL,
-    CONSTRAINT shared_files_pkey PRIMARY KEY (id),
-    CONSTRAINT shared_files_code_key UNIQUE (code)
+    CONSTRAINT shared_files_pkey PRIMARY KEY (id)
 );
+
+  CREATE INDEX idx_shared_files_code ON public.shared_files(code);
 
 -- Enable RLS and Allow ALL public operations (QuickText is an open sharing tool)
 ALTER TABLE public.shared_files ENABLE ROW LEVEL SECURITY;
