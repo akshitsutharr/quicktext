@@ -172,3 +172,11 @@ body {
     min-width: 44px;
   }
 }
+
+/* Glassmorphism utilities */
+.glassmorphism {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}

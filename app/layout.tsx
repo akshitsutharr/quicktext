@@ -1,9 +1,9 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Outfit } from "next/font/google"
 import "./globals.css"
 
-const inter = Inter({ subsets: ["latin"] })
+const outfit = Outfit({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "QuickText - Secure, Fast, Self-Destructing Text Sharing",
@@ -58,7 +58,7 @@ export default function RootLayout({
           <link rel="icon" href="/favicon.png" sizes="any" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className={inter.className + " min-h-screen bg-black text-white antialiased"}>
+      <body className={outfit.className + " min-h-screen bg-black text-white antialiased"}>
         {children}
       </body>
     </html>

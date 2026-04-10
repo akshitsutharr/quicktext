@@ -1,4 +1,4 @@
-# QuickText - Instant Text Sharing Platform
+# QuickText - Instant Text, File, & URL Sharing Platform
 ## [QuickText DEMO](https://quicktextt.vercel.app)
 
 ## Screenshot
@@ -15,51 +15,31 @@
   </tr>
 </table>
 
-
-
 ---
 
 ## ✨ Features
 
 ### 🔥 Core Features
 
-- **🎯 5-Digit Code Sharing** – Unique codes for instant text sharing
-- **⏰ Auto-Expiration** – Self-destruct after 1 hour
-- **🌐 Cross-Device Access** – Seamless sharing across devices
-- **🔗 Direct URL Sharing** – Share via direct links or QR codes
+- **🎯 Universal Code System** – Unique 5 or 6-digit codes for instant retrieval
+- **📤 Heavy File Sharing** – Upload up to 100MB powered seamlessly by Cloudflare R2
+- **🔗 Advanced URL Shortener** – Turn massive URLs into clean short links with downloadable QR Codes
+- **⏰ Granular Auto-Expiration** – Time-bombed content (Text: 1hr, Files: 2hr, Links: 24hr)
 - **✏️ Collaborative Editing** – Edit shared texts in real-time
-- **📱 Responsive Design** – Works perfectly on all screens
+- **🔍 Universal Global Search** – Input any QuickText access code right on the homepage
 
 ### 🛡️ Security & Privacy
 
-- **🔒 Automatic Cleanup** – Secure, time-based deletion
-- **🚫 No Registration Required** – Full anonymity
-- **⚡ Real-Time Expiration** – Countdown timer
-- **🗑️ Self-Destructing Texts** – Completely gone after expiry
+- **🚨 Secure S3 Presigned URLs** – Downloads are individually cryptographically signed
+- **🔒 Automatic Cleanups** – Physical R2 objects and DB metadata deleted on expiration
+- **🚫 Anonymous by Default** – Full anonymity, zero tracking
+- **⚡ Background Jobs** – Automated chronological sweeping
 
 ### 🎨 User Experience
 
-- **🌙 Dark Theme** – Elegant interface with subtle grids
-- **⚡ Fast & Optimized** – Speed-focused design
-- **📋 One-Click Copy** – Copy code or URL in a click
-- **🔄 Live Sync** – Instantly reflects updates
-
----
-
-## 🎯 Demo
-
-### 🔗 Live Demo
-
-👉 [**Try QuickText Now**](https://quicktextt.vercel.app)
-
-### 🧪 Quick Example
-
-```text
-1. Go to /send → Write your text → Get code `ABC12`
-2. Share `ABC12` or use URL `https://yourdomain.com/receive?code=ABC12`
-3. Others visit /receive and use code `ABC12` to access
-4. Edit together in real-time
-```
+- **🌙 Premium Glassmorphism** – Deep black aesthetic with dynamic blue and orange neon blurs
+- **⚡ Fast & Optimized** – Uses Next.js 15 App Router Server Components & Actions
+- **📋 Zero-Friction Copy** – One-click direct link distribution
 
 ---
 
@@ -70,6 +50,7 @@
 - Node.js 18+
 - npm or yarn
 - Supabase account (free tier is fine)
+- Cloudflare R2 or Amazon S3 buckets (for file support)
 
 ### 📥 Clone Repository
 
@@ -82,24 +63,31 @@ cd quicktext
 
 ```bash
 npm install
-# or
-yarn install
 ```
 
 ### 🧾 Setup Environment
 
-Create `.env.local`:
+Create `.env` (or `.env.local`):
 
 ```env
+# Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# R2/S3 Configuration
+R2_ACCESS_KEY_ID=your_access_key
+R2_SECRET_ACCESS_KEY=your_secret_key
+R2_BUCKET_NAME=your_bucket_name
+R2_ENDPOINT=your_storage_endpoint
+R2_PUBLIC_URL=your_public_domain
 ```
 
 ### 🗄️ Setup Database
 
-In Supabase SQL Editor, run:
+In your Supabase SQL Editor, run the schema file completely to inject all three core environments and RLS overrides:
 
 ```sql
+-- Texts Table
 CREATE TABLE IF NOT EXISTS shared_texts (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   code VARCHAR(5) NOT NULL UNIQUE,
@@ -107,81 +95,70 @@ CREATE TABLE IF NOT EXISTS shared_texts (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   expires_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
-
-CREATE INDEX IF NOT EXISTS idx_shared_texts_code ON shared_texts(code);
-CREATE INDEX IF NOT EXISTS idx_shared_texts_expires_at ON shared_texts(expires_at);
-
 ALTER TABLE shared_texts ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all operations" ON shared_texts FOR ALL USING (true);
 
-CREATE OR REPLACE FUNCTION cleanup_expired_texts()
-RETURNS void AS $$
-BEGIN
-  DELETE FROM shared_texts WHERE expires_at < NOW();
-END;
-$$ LANGUAGE plpgsql;
+-- Files Table
+CREATE TABLE public.shared_files (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    code text NOT NULL,
+    file_name text NOT NULL,
+    file_url text NOT NULL,
+    size integer NOT NULL,
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    expires_at timestamp with time zone NOT NULL,
+    CONSTRAINT shared_files_pkey PRIMARY KEY (id),
+    CONSTRAINT shared_files_code_key UNIQUE (code)
+);
+ALTER TABLE public.shared_files ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all public operations for shared_files" ON public.shared_files FOR ALL USING (true) WITH CHECK (true);
+
+-- URL Shortener Table
+CREATE TABLE public.shortened_urls (
+    id uuid NOT NULL DEFAULT gen_random_uuid(),
+    short_code text NOT NULL,
+    original_url text NOT NULL,
+    access_count integer NOT NULL DEFAULT 0,
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    expires_at timestamp with time zone NOT NULL,
+    CONSTRAINT shortened_urls_pkey PRIMARY KEY (id),
+    CONSTRAINT shortened_urls_short_code_key UNIQUE (short_code)
+);
+ALTER TABLE public.shortened_urls ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all public operations for shortened_urls" ON public.shortened_urls FOR ALL USING (true) WITH CHECK (true);
+```
+
+### ▶️ Configure CORS for R2
+
+Ensure your Cloudflare R2 bucket accepts client-side multipart presigned uploads by running the build-in script once:
+
+```bash
+node --env-file=.env scripts/setup-cors.mjs
 ```
 
 ### ▶️ Start Dev Server
 
 ```bash
 npm run dev
-# or
-yarn dev
 ```
 
 Visit [http://localhost:3000](http://localhost:3000) 🎉
 
 ---
 
-## 📖 Usage
+## 📖 Feature Usage Guide
 
-### ✍️ Send Text
+### ✍️ Send & Receive Text
+1. Navigate to `/send` to generate a 5-digit code or URL for snippet sharing.
+2. Navigate to `/receive` or input the text-code in the **Global Searchbar** to live-edit your note. 
 
-1. Visit `/send`
-2. Write or paste text
-3. Click "Create Share"
-4. Share the code or link
+### ☁️ Upload & Download Files
+1. Navigate to `/file/send` to securely upload your files directly onto S3 infrastructure. (Enforced max payload limit defaults at 100MB).
+2. Input the generated 5-digit code into the Global Search or go to `/file/receive`. Click "Download Securely" to generate your direct binary retrieval link.
 
-### 📥 Receive Text
-
-1. Visit `/receive`
-2. Enter 5-digit code
-3. View, edit, and sync text
-
-### 🔗 URL Example
-
-```text
-https://yourdomain.com/receive?code=ABC12
-```
-
----
-
-## 🔧 API Reference
-
-### `shareText(text: string)`
-
-```ts
-const code = await shareText("Hello"); // returns "ABC12"
-```
-
-### `getSharedText(code: string)`
-
-```ts
-const text = await getSharedText("ABC12");
-```
-
-### `updateSharedText(code: string, text: string)`
-
-```ts
-await updateSharedText("ABC12", "Updated content");
-```
-
-### `getTextStats(code: string)`
-
-```ts
-const stats = await getTextStats("ABC12");
-```
+### 🔗 Shorten Links & QR Codes
+1. Navigate to `/url`, paste a long link securely to get a clean `/s/...` route.
+2. Directly download the uniquely assigned `.png` QR code locally.
 
 ---
 
@@ -189,24 +166,10 @@ const stats = await getTextStats("ABC12");
 
 ### 🧰 Stack
 
-- **Frontend**: Next.js 14 + React + TypeScript
+- **Frontend**: Next.js 15 (App Router) + React + TypeScript + Framer Motion
 - **Styling**: Tailwind CSS + shadcn/ui
-- **Backend**: Supabase (PostgreSQL)
-- **Deployment**: Vercel
-
-### 📁 Structure
-
-```text
-quicktext/
-├── app/
-│   ├── send/
-│   ├── receive/
-│   └── layout.tsx
-├── components/ui/
-├── lib/supabase.ts
-├── scripts/create-tables.sql
-└── README.md
-```
+- **Backend Auth & Meta**: Supabase (PostgreSQL)
+- **Object Storage**: Cloudflare R2 (S3 Client presign APIs)
 
 ---
 
@@ -219,64 +182,7 @@ npm i -g vercel
 vercel
 ```
 
-Set environment variables:
-
-```env
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
-```
-
-### 🌐 Other Platforms
-
-- **Netlify**
-- **Railway**
-- **DigitalOcean**
-
----
-
-## ⚙️ Configuration
-
-### 🔁 Change Expiration
-
-```ts
-expiresAt.setHours(expiresAt.getHours() + 24);
-```
-
-### 🔢 Code Length
-
-```ts
-for (let i = 0; i < 6; i++) { ... }
-```
-
----
-
-## 🧪 Testing
-
-### ✅ Run Tests
-
-```bash
-npm test
-```
-
-### ✔️ Manual Checklist
-
--
-
----
-
-## 🤝 Contributing
-
-### 🛠 Steps
-
-```bash
-git clone https://github.com/akshitsuthar/quicktext.git
-cd quicktext
-git checkout -b feature/amazing-feature
-```
-
-- Make changes
-- Add tests
-- Commit & PR
+Make sure to mount all standard `.env` variables cleanly!
 
 ---
 
@@ -286,14 +192,4 @@ MIT - [LICENSE](LICENSE)
 
 ---
 
-## 🙏 Acknowledgements
-
-- Supabase
-- Vercel
-- TailwindCSS
-- shadcn/ui
-
----
-
 ## MADE WITH ❤️ BY AKSHIT SUTHAR
-

@@ -4,8 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent } from "@/components/ui/card"
-import { Copy, ArrowLeft, Share2, Clock, ExternalLink } from "lucide-react"
+import { Copy, ArrowLeft, Share2, Clock, ExternalLink, CheckCircle2 } from "lucide-react"
 import { shareText } from "../actions"
 
 export default function SendPage() {
@@ -13,6 +12,7 @@ export default function SendPage() {
   const [shareCode, setShareCode] = useState("")
   const [isSharing, setIsSharing] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [urlCopied, setUrlCopied] = useState(false)
 
   const handleShare = async () => {
     if (!text.trim()) return
@@ -38,183 +38,97 @@ export default function SendPage() {
   const copyUrl = async () => {
     const url = `${window.location.origin}/receive?code=${shareCode}`
     await navigator.clipboard.writeText(url)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+    setUrlCopied(true)
+    setTimeout(() => setUrlCopied(false), 2000)
   }
 
   const shareUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/receive?code=${shareCode}`
 
   return (
-    <div className="min-h-screen bg-black text-white relative flex flex-col">
-      {/* Dotted grid background */}
-      <div
-        className="absolute inset-0 opacity-20"
-        style={{
-          backgroundImage: "radial-gradient(circle, #374151 1px, transparent 1px)",
-          backgroundSize: "20px 20px",
-        }}
-      />
+    <div className="min-h-screen bg-black text-white px-4 sm:px-6 md:p-8 font-sans flex flex-col items-center">
+      {/* Background effect */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at center, #1e3a8a 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[70vw] h-[50vh] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="relative z-10 flex flex-col min-h-screen">
-        <nav className="border-b border-gray-800 px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between max-w-6xl mx-auto">
-            <div className="flex items-center space-x-4 sm:space-x-8">
-              <Link href="/" className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors duration-200">
-                <ArrowLeft className="h-4 w-4" />
-                <span className="text-sm sm:text-base">QuickText</span>
-              </Link>
-              <div className="hidden md:flex items-center space-x-6 text-sm text-gray-400">
-                <span>Tools</span>
-                <span>/</span>
-                <span>Text Sharing</span>
-              </div>
-            </div>
-            {!shareCode && (
-              <Button
-                onClick={handleShare}
-                disabled={!text.trim() || isSharing}
-                className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-sm sm:text-base px-3 sm:px-4 py-2 transform hover:scale-105 transition-all duration-200"
-              >
-                {isSharing ? "Sharing..." : "Share"}
-              </Button>
-            )}
-          </div>
-        </nav>
+      <div className="max-w-4xl mx-auto mt-8 relative z-10 w-full px-4">
+        <Link href="/" className="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-8 group">
+          <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+          Back to Home
+        </Link>
 
-        <main className="flex-1 flex items-center justify-center">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8 w-full">
-            {!shareCode ? (
-              <div className="space-y-6">
-                <div className="text-center space-y-3 sm:space-y-4">
-                  <h1 className="text-2xl sm:text-3xl font-bold">Share Your Text</h1>
-                  <p className="text-gray-400 text-sm sm:text-base px-4">Write or paste your text below to generate a shareable code</p>
-                  <div className="flex items-center justify-center space-x-2 text-xs sm:text-sm text-yellow-400">
-                    <Clock className="h-4 w-4" />
-                    <span>Shared text expires after 1 hour</span>
-                  </div>
-                </div>
+        <h1 className="text-3xl sm:text-4xl font-bold mb-2 tracking-tight">Share Text</h1>
+        <p className="text-gray-400 mb-8 max-w-lg">Write or paste your exact text below. It will be securely stored and deleted in exactly 1 hour.</p>
 
-                <div className="bg-gray-900/50 backdrop-blur-sm border border-gray-800 rounded-xl overflow-hidden shadow-xl">
-                  <Textarea
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder="Write or paste your text here..."
-                    className="min-h-[300px] sm:min-h-[400px] bg-transparent border-0 text-white placeholder:text-gray-500 resize-none focus:ring-0 text-sm sm:text-base p-4 sm:p-6"
-                  />
-                </div>
-
-                <div className="flex justify-center px-4">
-                  <Button
-                    onClick={handleShare}
-                    disabled={!text.trim() || isSharing}
-                    size="lg"
-                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:cursor-not-allowed px-6 sm:px-8 text-base sm:text-lg transform hover:scale-105 transition-all duration-200 shadow-lg"
-                  >
-                    <Share2 className="mr-2 h-5 w-5" />
-                    {isSharing ? "Creating Share..." : "Create Share"}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                <div className="text-center space-y-3 sm:space-y-4">
-                  <h1 className="text-2xl sm:text-3xl font-bold">Text Shared Successfully!</h1>
-                  <p className="text-gray-400 text-sm sm:text-base px-4">Share this code or URL with others to give them access to your text</p>
-                  <div className="flex items-center justify-center space-x-2 text-xs sm:text-sm text-yellow-400">
-                    <Clock className="h-4 w-4" />
-                    <span>Expires in 1 hour</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
-                  <Card className="bg-gray-900/50 backdrop-blur-sm border-gray-800 hover:bg-gray-900/70 transition-all duration-300 hover:scale-105 shadow-lg">
-                    <CardContent className="p-4 sm:p-6 text-center space-y-4">
-                      <div>
-                        <p className="text-xs sm:text-sm text-gray-400 mb-2">Share Code:</p>
-                        <div className="text-2xl sm:text-3xl font-mono font-bold tracking-wider text-blue-400">{shareCode}</div>
-                      </div>
-                      <Button
-                        onClick={copyCode}
-                        variant="outline"
-                        className="w-full border-2 border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-gray-500 bg-transparent transform hover:scale-105 transition-all duration-200"
-                      >
-                        <Copy className="mr-2 h-4 w-4" />
-                        {copied ? "Copied!" : "Copy Code"}
-                      </Button>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="bg-gray-900/50 backdrop-blur-sm border-gray-800 hover:bg-gray-900/70 transition-all duration-300 hover:scale-105 shadow-lg">
-                    <CardContent className="p-4 sm:p-6 space-y-4">
-                      <div>
-                        <p className="text-xs sm:text-sm text-gray-400 mb-2">Direct URL:</p>
-                        <div className="text-xs sm:text-sm text-blue-400 break-all bg-gray-800 p-2 sm:p-3 rounded-lg">{shareUrl}</div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          onClick={copyUrl}
-                          variant="outline"
-                          className="flex-1 border-2 border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-gray-500 bg-transparent transform hover:scale-105 transition-all duration-200"
-                        >
-                          <Copy className="mr-2 h-4 w-4" />
-                          Copy URL
-                        </Button>
-                        <Button
-                          onClick={() => window.open(shareUrl, "_blank")}
-                          variant="outline"
-                          className="border-2 border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-gray-500 bg-transparent transform hover:scale-105 transition-all duration-200"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                <div className="flex flex-col sm:flex-row justify-center space-y-2 sm:space-y-0 sm:space-x-4 px-4">
-                  <Button
-                    onClick={() => {
-                      setShareCode("")
-                      setText("")
-                    }}
-                    variant="outline"
-                    className="w-full sm:w-auto border-2 border-gray-600 text-gray-300 hover:bg-gray-800 hover:border-gray-500 bg-transparent transform hover:scale-105 transition-all duration-200"
-                  >
-                    Share Another Text
-                  </Button>
-                  <Link href="/receive" className="w-full sm:w-auto">
-                    <Button className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg">
-                      Go to Receive
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
-        </main>
-
-        {/* Footer */}
-        <footer className="border-t border-gray-800 mt-auto">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-            <div className="text-center">
-              <p className="text-gray-400 font-medium tracking-wide text-xs sm:text-sm">
-                Made with{" "}
-                <span className="text-red-500 animate-pulse inline-block hover:scale-125 transition-transform duration-300">
-                  ❤️
-                </span>{" "}
-                by{" "}
-                <a 
-                  href="https://github.com/akshitsutharr" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-white font-semibold hover:text-blue-400 transition-colors duration-300 hover:underline"
+        {!shareCode ? (
+          <div className="bg-[#111] border border-gray-800 rounded-3xl p-6 sm:p-8">
+             <div className="space-y-6">
+                <Textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  placeholder="Paste your text or code block here..."
+                  className="min-h-[300px] sm:min-h-[400px] w-full bg-black border border-gray-700 text-white rounded-xl p-6 text-lg focus:outline-none focus:border-blue-500 transition-colors placeholder:text-gray-700 resize-none font-mono"
+                />
+                
+                <Button
+                  onClick={handleShare}
+                  disabled={!text.trim() || isSharing}
+                  className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-lg transition-all flex items-center justify-center font-sans tracking-wide"
                 >
-                  Akshit Suthar
-                </a>
-              </p>
+                  <Share2 className="mr-2 h-5 w-5" />
+                  {isSharing ? "Creating Secure Link..." : "Create Secure Share"}
+                </Button>
+             </div>
+          </div>
+        ) : (
+          <div className="bg-blue-500/5 border border-blue-500/20 rounded-3xl p-8 text-center animate-in fade-in zoom-in duration-300">
+            <div className="text-center mb-8">
+               <div className="w-16 h-16 bg-blue-500/20 text-blue-400 flex items-center justify-center rounded-full mx-auto mb-4 scale-110">
+                  <CheckCircle2 size={32} />
+               </div>
+               <h2 className="text-2xl font-bold">Text Published!</h2>
+               <div className="flex items-center justify-center text-orange-400 text-sm mt-3 font-medium">
+                  <Clock size={16} className="mr-1.5 inline"/>
+                  Expires automatically in 60 minutes
+               </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+               {/* Code Block */}
+               <div className="bg-black/40 border border-white/10 rounded-2xl p-6 md:p-8 flex flex-col items-center justify-center space-y-6 flex-1">
+                 <div>
+                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Share Code</p>
+                   <p className="text-5xl font-black tracking-widest text-blue-400 font-mono select-all bg-blue-500/10 py-3 px-6 rounded-xl">{shareCode}</p>
+                 </div>
+                 <Button onClick={copyCode} variant="outline" className="w-full border-gray-700 hover:bg-white hover:text-black hover:border-white transition-all bg-transparent h-12">
+                   {copied ? <span className="flex items-center justify-center"><CheckCircle2 size={18} className="mr-2" /> Copied!</span> : <span className="flex items-center justify-center"><Copy size={18} className="mr-2"/> Copy Code</span>}
+                 </Button>
+               </div>
+
+               {/* Direct Link Block */}
+               <div className="bg-black/40 border border-white/10 rounded-2xl p-6 md:p-8 flex flex-col space-y-6 flex-1 text-left">
+                  <div className="flex-grow">
+                     <p className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">Direct Link</p>
+                     <input readOnly value={shareUrl} className="w-full bg-[#111] border border-gray-800 text-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none mb-4" />
+                     <p className="text-gray-500 text-sm">Send this link to anyone to grant them immediate read-access.</p>
+                  </div>
+                  <div className="flex space-x-3">
+                     <Button onClick={copyUrl} variant="outline" className="flex-1 border-gray-700 hover:bg-white hover:text-black hover:border-white transition-all bg-transparent h-12">
+                       {urlCopied ? <span className="flex items-center justify-center"><CheckCircle2 size={18} className="mr-2" /> Copied!</span> : <span className="flex items-center justify-center"><Copy size={18} className="mr-2"/> Copy Link</span>}
+                     </Button>
+                     <Button onClick={() => window.open(shareUrl, "_blank")} variant="outline" className="shrink-0 border-gray-700 hover:bg-white hover:text-black hover:border-white transition-all bg-transparent h-12 w-12 p-0">
+                       <ExternalLink size={18} />
+                     </Button>
+                  </div>
+               </div>
+            </div>
+
+            <div className="mt-8 border-t border-gray-800 pt-6">
+               <button onClick={() => { setShareCode(""); setText(""); }} className="text-gray-400 hover:text-white transition-colors text-sm font-medium">
+                  Share another text snippet
+               </button>
             </div>
           </div>
-        </footer>
+        )}
       </div>
     </div>
   )
