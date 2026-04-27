@@ -1,216 +1,301 @@
 <div align="center">
 
-<img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/favicon.png" alt="QuickText Logo" width="120" style="margin-bottom: 20px; border-radius: 20px" />
+<img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/favicon.png" alt="Quicktext logo" width="112" height="112" />
 
-# QuickText
-**The Ultimate Ephemeral Sharing Platform**
+# Quicktext
 
-[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19-blue?style=for-the-badge&logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![Supabase](https://img.shields.io/badge/Supabase-DB-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
-[![Cloudflare R2](https://img.shields.io/badge/Cloudflare_R2-Storage-F38020?style=for-the-badge&logo=cloudflare)](https://www.cloudflare.com/)
-[![Vercel](https://img.shields.io/badge/Vercel-Deployed-black?style=for-the-badge&logo=vercel)](https://vercel.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+**Fast, temporary sharing for text, files, links, and paired devices.**
 
-**[🔥 Live Demo](https://quicktextt.vercel.app) • [📖 Documentation](#-getting-started) • [🐛 Report Bug](https://github.com/akshitsutharr/quicktext/issues)**
+[![Next.js](https://img.shields.io/badge/Next.js-16.2.3-black?style=for-the-badge&logo=nextdotjs)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-18.3.1-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![License](https://img.shields.io/badge/License-MIT-f5c542?style=for-the-badge)](./LICENSE)
 
-*QuickText is a zero-friction, incredibly fast web utility built to instantly transfer text snippets, share heavy files anonymously, and shorten massive tracking URLs into clean, readable formats. All powered by highly-performant modern technologies.*
+[Live demo](https://quicktextt.vercel.app) · [What it does](#-what-quicktext-does) · [Setup](#-setup) · [Tech stack](#-tech-stack)
 
 </div>
 
 ---
 
-## 📸 Platform Sneak Peek
+## Overview
 
-<p align="center">
-  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/d4klhzs1rjl2gt1pfq0h.png" width="45%"/>
-  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/a2vktsgj0l20m7h6co7v.png" width="45%"/>
-</p>
+Quicktext is a clean, short-lived sharing app for moving content between devices without friction. It is designed for quick handoffs, temporary access, and simple links that do not need a full account flow.
 
-<p align="center">
-  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/2gep3k0u0rbnrani5idc.png" width="45%"/>
-  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ex7o1ltqyelao7pgzvbi.png" width="45%"/>
-</p>
+Use it to:
 
-<p align="center">
-  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/3ebi7vmxud9zrgbh3476.png" width="60%"/>
-</p>
+- send text snippets or notes with a short code
+- share files from one device to another
+- shorten a URL and present it as a QR-friendly link
+- pair two devices for instant transfer
+- jump to content using the global search bar
+
+It is intentionally account-free. The app favors short-lived records, public access patterns, and direct browser-to-browser flows over traditional sign-in driven sharing.
 
 ---
 
-## ✨ Features That Set QuickText Apart
+## How it works
 
-### 📝 1. Ephemeral Text Collaboration
-Need to move a secure API key or a code snippet across devices instantly?
-- **5-Digit Access Codes:** Share text with a uniquely generated, cryptographically secure 5-digit code.
-- **Auto-Expiration:** Every snippet operates on a strict 1-hour time bomb. Once the time is up, it is systematically purged from the database.
-- **Live Syncing:** Receive text, edit it, and sync it back instantly. 
+Quicktext is built around four small flows that all follow the same pattern: create a temporary record, expose it through a short code, and resolve it from another device.
 
-### ☁️ 2. Heavy File Transfers (Up to 100MB)
-Ditch email attachments and bloated cloud drive setups.
-- **S3-Powered Uploads:** QuickText uses Cloudflare R2's hyper-fast edge servers to process multipart file uploads.
-- **No Identity Required:** Share anonymous binary data. Just upload, get a 5-digit code, and share.
-- **Presigned Downloads:** Files are cryptographically sealed. Upon access, a one-time Presigned GET URL is generated, securely bypassing public bucket restrictions. Expire after 2 hours.
+### 1. Text flow
+Create a snippet in `/send`, generate a short code, and open it later from `/receive` or the homepage search bar.
 
-### 🔗 3. URL Shortening & QR Engine
-Convert nasty UTM-loaded tracking URLs into elegant links.
-- **Bespoke Short Links:** Formats your URL to `quicktextt.vercel.app/s/mnopqr`.
-- **Dynamic QR Code Generation:** Instantly builds an SVG/PNG scannable code. Download it straight to your device to print on posters or integrate into digital campaigns.
-- **Expiration:** Links persist for 24 hours.
+### 2. File flow
+Upload one or more files from `/file/send`, store the metadata in Supabase, and retrieve the file from the paired or receiving device.
 
-### 🔍 4. The Global "Omni-Search"
-We eliminated complex navigation. On the homepage sits a **Global Searchbar**. Type your 5-digit text code, 5-digit file code, or 6-digit URL code. QuickText's router algorithm automatically queries Supabase, resolves the media type, and drops you precisely where you need to be.
+### 3. URL flow
+Paste a long URL into `/url`, create a compact short code, and optionally share the result as a scannable route.
+
+### 4. Pairing flow
+Start a pairing session from `/pair`, exchange the pairing code, and use the session to move data between devices with less manual copying.
 
 ---
 
-## 🛠️ The Tech Stack
+## What Quicktext does
 
-QuickText was engineered with performance and aesthetics in mind.
-
-| Category | Technology | Purpose |
-| :--- | :--- | :--- |
-| **Framework** | Next.js 15 (App Router) | Core React wrapper, handling Server Components and robust API endpoints. |
-| **Language** | TypeScript | Total end-to-end type safety, eliminating runtime type errors. |
-| **Database** | Supabase (PostgreSQL) | Stores metadata, access codes, URL metrics, and handles Edge row-level security. |
-| **Object Storage** | Cloudflare R2 | S3-compatible, ultra-low latency, zero-egress fee blob storage for heavy files. |
-| **Styling** | Tailwind CSS v3 | Utility-first compilation for lightning-fast UI painting. |
-| **Motion** | Framer Motion | Smooth, physics-based micro-interactions and transitions. |
-| **Components**| shadcn/ui | Radix-based accessible, unstyled component primitives. |
+| Feature | Purpose | Entry point |
+| --- | --- | --- |
+| ✍️ Text share | Move notes, snippets, or short messages with a one-time code. | `/send` |
+| 📁 File share | Upload one or more files and hand them off quickly. | `/file/send` |
+| 🔗 URL shortener | Turn long links into compact shareable URLs. | `/url` |
+| 📱 Pairing | Connect two devices for faster transfer flow. | `/pair` |
+| 🔎 Global search | Find content by code from the homepage search bar. | Home |
 
 ---
 
-## 🚀 Getting Started
+## Feature highlights
 
-Want to run QuickText locally or deploy your own internal instance? Follow these steps:
+### ✍️ Text share
+Use text share when you want to send short drafts, code fragments, or temporary notes without opening a chat app.
 
-### 1. Prerequisites
-Before beginning, ensure you have:
-- **Node.js 18+** installed
-- **Git** installed
-- A free **[Supabase](https://supabase.com)** account
-- A free **[Cloudflare R2](https://workers.cloudflare.com/)** bucket setup (or AWS S3)
+### 📁 File share
+Send files directly from the browser. The flow is built for quick transfers and simple retrieval on another device.
 
-### 2. Clone & Install
+### 🔗 URL shortener
+Generate short links that are easier to read, share, and scan in QR workflows.
+
+### 📱 Pairing
+Pair two devices through the app to reduce setup and make transfers feel instant.
+
+### 🔎 Global search
+Search by code from the homepage and jump straight into the matching content flow.
+
+---
+
+## Interface map
+
+- `/` - homepage with feature cards and global search
+- `/send` - text sharing flow
+- `/receive` - receive text content
+- `/file/send` - file upload and sharing flow
+- `/file/receive` - receive shared files
+- `/url` - link shortener
+- `/pair` - pairing interface
+- `/s/[code]` - code-based short route
+- `/[code]` - dynamic code route
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+| --- | --- |
+| Framework | Next.js 16 (App Router) |
+| UI | React 18 + Tailwind CSS 3.4 |
+| Language | TypeScript |
+| Database | Supabase |
+| Storage | Cloudflare R2 / S3-compatible storage |
+| Icons | Lucide React |
+| Utilities | `date-fns`, `zod`, `react-hook-form`, `sonner`, `cmdk` |
+
+---
+
+## Data model
+
+The app relies on a small set of Supabase tables that keep the data model simple and easy to expire.
+
+| Table | What it stores | Notes |
+| --- | --- | --- |
+| `shared_texts` | Temporary text snippets | Stores a code, content, timestamps, and expiry time. |
+| `shared_files` | Uploaded file metadata | Stores file name, file URL, size, code, and expiry time. |
+| `shortened_urls` | Short links | Stores the original URL, short code, access count, and expiry time. |
+| `pairing_sessions` | Pairing session state | Stores the pairing code, session ID, device tokens, and expiry time. |
+| `session_shares` | Shared session payloads | Stores content exchanged during a pairing session. |
+
+The schema is created through the SQL files in `scripts/` and `supabase-migration.sql`.
+
+---
+
+## Setup
+
+### 1. Install dependencies
+
 ```bash
-# Clone the repository
-git clone https://github.com/akshitsutharr/quicktext.git
-
-# Navigate to directory
-cd quicktext
-
-# Install the necessary dependencies (Use npm to ensure lockfile sync!)
 npm install
 ```
 
-### 3. Environment Variable Setup
-Create a `.env` (or `.env.local`) file at the root of your project:
+### 2. Create environment variables
+
+Create a `.env.local` file at the project root.
 
 ```env
-# -----------------------------
-# SUPABASE DATABASE SETTINGS
-# -----------------------------
 NEXT_PUBLIC_SUPABASE_URL=https://your-project-id.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGc...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-# -----------------------------
-# CLOUDFLARE R2 / S3 SETTINGS
-# -----------------------------
 R2_ACCESS_KEY_ID=your_access_key
 R2_SECRET_ACCESS_KEY=your_secret_key
-R2_BUCKET_NAME=your_quicktext_bucket
+R2_BUCKET_NAME=your_bucket_name
 R2_ENDPOINT=https://your-account-id.r2.cloudflarestorage.com
 R2_PUBLIC_URL=https://your-public-bucket-domain.com
 ```
 
-### 4. Database Schema Migrations
-Navigate to the Supabase SQL Editor and run the following commands to construct the core schemas for the application:
+### 3. Set up the database
 
-<details>
-<summary><b>Click to expand the SQL schema...</b></summary>
+Run the SQL scripts in `scripts/` or apply the schema from `supabase-migration.sql`.
 
-```sql
--- 1. Shared Texts Table
-CREATE TABLE IF NOT EXISTS shared_texts (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  code VARCHAR(5) NOT NULL UNIQUE,
-  content TEXT NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  expires_at TIMESTAMP WITH TIME ZONE NOT NULL
-);
-ALTER TABLE shared_texts ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all operations" ON shared_texts FOR ALL USING (true);
+Recommended order:
 
--- 2. Shared Files Table
-CREATE TABLE public.shared_files (
-    id uuid NOT NULL DEFAULT gen_random_uuid(),
-    code text NOT NULL,
-    file_name text NOT NULL,
-    file_url text NOT NULL,
-    size integer NOT NULL,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    expires_at timestamp with time zone NOT NULL,
-    CONSTRAINT shared_files_pkey PRIMARY KEY (id),
-    CONSTRAINT shared_files_code_key UNIQUE (code)
-);
-ALTER TABLE public.shared_files ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all public operations for shared_files" ON public.shared_files FOR ALL USING (true) WITH CHECK (true);
+1. create the base tables
+2. enable row-level security policies
+3. add cleanup and pairing logic
+4. configure any storage or CORS rules required by your bucket
 
--- 3. Shortened URLs Table
-CREATE TABLE public.shortened_urls (
-    id uuid NOT NULL DEFAULT gen_random_uuid(),
-    short_code text NOT NULL,
-    original_url text NOT NULL,
-    access_count integer NOT NULL DEFAULT 0,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    expires_at timestamp with time zone NOT NULL,
-    CONSTRAINT shortened_urls_pkey PRIMARY KEY (id),
-    CONSTRAINT shortened_urls_short_code_key UNIQUE (short_code)
-);
-ALTER TABLE public.shortened_urls ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Allow all public operations for shortened_urls" ON public.shortened_urls FOR ALL USING (true) WITH CHECK (true);
-```
-</details>
+Helpful SQL files:
 
-### 5. CORS Integration for Storage
-Because users upload their heavy files directly from their browsers to the Edge network (bypassing the slow Node server), you must inject CORS headers into your storage provider. 
-We wrote a script for this! Just run:
+- `scripts/create-tables.sql` - creates the main text table and indexes
+- `scripts/create-cleanup-function.sql` - adds the cleanup helper for expired text records
+- `scripts/session-pairing.sql` - creates pairing session and session share tables
+- `scripts/allow-multiple-files-per-code.sql` - supports file flows that can attach more than one file to a code
+
+### 4. Configure storage CORS
+
+If you are using direct browser uploads, run:
+
 ```bash
 node --env-file=.env scripts/setup-cors.mjs
 ```
 
-### 6. Boot Sequence
+### 5. Start the app
+
 ```bash
 npm run dev
 ```
-Navigate to `http://localhost:3000`. Welcome to QuickText! 🎉
+
+Open `http://localhost:3000`.
+
+### 6. Verify the core flows
+
+After the app starts, check these paths in a browser:
+
+- home page search bar for code lookup
+- `/send` for text creation
+- `/file/send` for file upload
+- `/url` for short link creation
+- `/pair` for device pairing
 
 ---
 
-## 🎨 Design Philosophy
-1. **Premium Glassmorphism**: Avoid flat, basic styling. The entire routing infrastructure resides on a deep black `#000` canvas illuminated by neon blur variables `blue-500/10` and `orange-500/10`.
-2. **Minimalism**: 1-click execution. No mandatory user accounts. 
-3. **Responsive**: Cards restructure optimally for mobile and native iOS / Android web views alike.
+## Scripts
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the development server. |
+| `npm run build` | Build the production app. |
+| `npm run start` | Start the production server. |
+| `npm run lint` | Run Next.js linting. |
+| `npm run postbuild` | Generate the sitemap after build. |
+
+## Maintenance scripts
+
+The repository also includes a few direct SQL and Node helpers for local setup and maintenance.
+
+| File | Purpose |
+| --- | --- |
+| `scripts/setup-cors.mjs` | Configures bucket CORS for direct browser uploads. |
+| `scripts/test-url.mjs` | Exercises URL shortening behavior during local testing. |
+| `scripts/create-cleanup-function.sql` | Adds the expired-text cleanup function. |
+| `scripts/session-pairing.sql` | Adds pairing session tables and indexes. |
 
 ---
 
-## 🤝 Contributing
-Contributions are absolutely welcome. If you find a bug or have a feature idea, follow these steps to push your changes!
+## Project structure
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+```text
+app/               # Routes, actions, and page shells
+components/        # Shared UI and feature components
+hooks/             # Client hooks
+lib/               # Supabase and utility helpers
+public/            # Favicons, robots, sitemap assets
+scripts/           # Setup and maintenance scripts
+styles/            # Global CSS and design tokens
+```
 
 ---
 
-## 📜 License
-Optimized and distributed under the **MIT License**. See `LICENSE` for more information.
+## Design notes
+
+- dark, high-contrast visual language
+- feature cards with stronger spacing and supporting copy
+- subtle motion and hover feedback
+- fast, code-first navigation with search and route shortcuts
+
+---
+
+## Deployment
+
+Quicktext is ready for standard Next.js deployments. The current setup works well on Vercel, but any host that supports Node.js and environment variables should work.
+
+Before deploying, confirm:
+
+- production Supabase credentials are set
+- storage CORS is enabled for the chosen bucket
+- sitemap and robots files are being served from `public/`
+- your public storage URL matches the environment variables used by the file flow
+- cleanup behavior for expired records is working the way you expect in production
+
+### Environment checklist
+
+- `NEXT_PUBLIC_SUPABASE_URL` - public Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - public Supabase anon key
+- `R2_ACCESS_KEY_ID` - R2 or S3 access key
+- `R2_SECRET_ACCESS_KEY` - R2 or S3 secret key
+- `R2_BUCKET_NAME` - target bucket name
+- `R2_ENDPOINT` - S3-compatible endpoint
+- `R2_PUBLIC_URL` - public asset URL for downloaded files
+
+---
+
+## Troubleshooting
+
+- If text or file lookups fail, confirm the relevant row exists and the code has not expired.
+- If file uploads fail in the browser, re-run the CORS setup script and verify the bucket endpoint.
+- If pairing stops working, check the `pairing_sessions` and `session_shares` tables for expired rows or mismatched session IDs.
+- If short links resolve but the counter does not change, confirm the access-count function is available in Supabase.
+
+---
+
+## Contributing
+
+Contributions are welcome.
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Make a focused change.
+4. Test locally.
+5. Open a pull request.
+
+---
+
+## License
+
+Released under the [MIT License](./LICENSE).
 
 ---
 
 <div align="center">
-<b>Built with 💙 by <a href="https://github.com/akshitsutharr">Akshit Suthar</a></b>
+
+**Built for quick sharing, by Akshit Suthar**
+
 </div>
