@@ -1,12 +1,13 @@
 "use client"
 
 import { useState, useEffect, Suspense } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { ArrowLeft, Download, Save, Clock, Copy, AlignLeft, CheckCircle2 } from "lucide-react"
+import { ArrowLeft, Clock, Copy, AlignLeft, CheckCircle2, QrCode, Zap, Save, Loader2 } from "lucide-react"
 import { getSharedText, updateSharedText, getTextStats } from "../actions"
+import { QRScanner } from "@/components/qr-scanner"
+import { toast } from "sonner"
 
 function TextReceiver() {
   const searchParams = useSearchParams()
@@ -22,207 +23,195 @@ function TextReceiver() {
   const [expiresAt, setExpiresAt] = useState<string | null>(null)
   const [timeLeft, setTimeLeft] = useState<string>("")
   const [isCopied, setIsCopied] = useState(false)
+  const [showScanner, setShowScanner] = useState(false)
 
-  // Auto-load text if code is provided in URL
   useEffect(() => {
     if (initialCode && initialCode.length === 5) {
       handleReceive(initialCode)
     }
   }, [initialCode])
 
-  // Update countdown timer
   useEffect(() => {
     if (!expiresAt) return
-
     const updateTimer = () => {
       const now = new Date()
       const expires = new Date(expiresAt)
       const diff = expires.getTime() - now.getTime()
-
       if (diff <= 0) {
         setTimeLeft("Expired")
         return
       }
-
       const minutes = Math.floor(diff / (1000 * 60))
       const seconds = Math.floor((diff % (1000 * 60)) / 1000)
       setTimeLeft(`${minutes}m ${seconds}s`)
     }
-
     updateTimer()
     const interval = setInterval(updateTimer, 1000)
-
     return () => clearInterval(interval)
   }, [expiresAt])
 
   const handleCopy = async () => {
     if (!text.trim()) return
-    
     try {
       await navigator.clipboard.writeText(text)
       setIsCopied(true)
+      toast.success("Copied to clipboard")
       setTimeout(() => setIsCopied(false), 2000)
     } catch (e) {
-      const textArea = document.createElement('textarea')
-      textArea.value = text
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textArea)
-      setIsCopied(true)
-      setTimeout(() => setIsCopied(false), 2000)
+      toast.error("Failed to copy")
     }
   }
 
   const handleReceive = async (codeToUse?: string) => {
     const targetCode = codeToUse || code
     if (!targetCode.trim() || targetCode.length !== 5) {
-      setError("Please enter a valid 5-digit code")
+      setError("Enter 5-digit code")
       return
     }
-
     setIsLoading(true)
     setError("")
-
     try {
       const [sharedText, stats] = await Promise.all([
         getSharedText(targetCode.toUpperCase()),
         getTextStats(targetCode.toUpperCase()),
       ])
-
       if (sharedText && !stats.isExpired) {
         setText(sharedText)
         setCurrentCode(targetCode.toUpperCase())
         setExpiresAt(stats.expiresAt)
         setIsEditing(false)
-      } else if (stats.isExpired) {
-        setError("This code has expired. Shared texts are only available for 1 hour.")
       } else {
-        setError("Code not found. Please check and try again.")
+        setError(stats.isExpired ? "This code has expired" : "Code not found")
       }
     } catch (error) {
-      setError("Failed to retrieve text. Please try again.")
+      setError("An error occurred")
     } finally {
       setIsLoading(false)
     }
   }
 
+  const handleScan = (decodedText: string) => {
+    setShowScanner(false)
+    const parts = decodedText.split(/[=/]/)
+    const scannedCode = parts[parts.length - 1].toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5)
+    if (scannedCode.length === 5) {
+        setCode(scannedCode)
+        handleReceive(scannedCode)
+    } else {
+        toast.error("Invalid QR format")
+    }
+  }
+
   const handleSave = async () => {
     if (!currentCode || !text.trim()) return
-
     setIsSaving(true)
     try {
       const success = await updateSharedText(currentCode, text)
       if (success) {
         setIsEditing(false)
+        toast.success("Changes saved")
       } else {
-        setError("Failed to save changes. The text may have expired.")
+        setError("Failed to save changes")
       }
     } catch (error) {
-      setError("Failed to save changes. Please try again.")
+      toast.error("An error occurred")
     } finally {
       setIsSaving(false)
     }
   }
 
   return (
-    <div className="max-w-4xl mx-auto mt-8 relative z-10 w-full px-4">
-      <Link href="/" className="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-8 group">
-        <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+    <div className="max-w-4xl mx-auto w-full px-6 animate-reveal">
+      <Link href="/" className="inline-flex items-center text-zinc-500 hover:text-zinc-100 transition-colors mb-12 group text-sm font-medium">
+        <ArrowLeft size={16} className="mr-2 group-hover:-translate-x-1 transition-transform" />
         Back to Home
       </Link>
 
-      <h1 className="text-3xl sm:text-4xl font-bold mb-2 tracking-tight">Receive Text</h1>
-      <p className="text-gray-400 mb-8 max-w-lg">Enter a 5-digit code to securely view and edit a shared text snippet.</p>
+      <div className="mb-12">
+        <h1 className="text-4xl font-bold tracking-tighter text-zinc-100">Receive Data</h1>
+        <p className="text-zinc-500 mt-2 font-medium">Access shared snippets via numeric key or scan.</p>
+      </div>
+
+      {showScanner && <QRScanner onScan={handleScan} onClose={() => setShowScanner(false)} />}
 
       {!text ? (
-        <div className="bg-[#111] border border-gray-800 rounded-3xl p-6 sm:p-8 max-w-xl">
-          <div className="space-y-6">
-            <div>
-              <label htmlFor="code" className="block text-sm font-medium text-gray-400 mb-2">
-                5-Digit Share Code
-              </label>
+        <div className="max-w-md bg-zinc-900/40 border border-zinc-800 rounded-2xl p-10">
+          <div className="space-y-8">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">Share Key</label>
+                <button onClick={() => setShowScanner(true)} className="text-[11px] font-bold uppercase text-zinc-500 hover:text-zinc-100 flex items-center transition-colors">
+                  <QrCode size={12} className="mr-1.5" /> Scan QR
+                </button>
+              </div>
               <input
-                id="code"
                 type="text"
                 maxLength={5}
                 value={code}
-                onChange={(e) => {
-                  setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))
-                  setError("")
-                }}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
                 onKeyDown={(e) => e.key === "Enter" && handleReceive()}
-                className="w-full bg-black border border-gray-700 text-white rounded-xl px-4 py-4 text-center text-4xl font-mono tracking-[0.5em] focus:outline-none focus:border-blue-500 transition-colors uppercase placeholder:text-gray-800"
-                placeholder="XXXXX"
+                className="w-full bg-black border border-zinc-800 rounded-xl py-5 text-center text-5xl font-bold font-mono tracking-[0.2em] text-zinc-100 focus:outline-none focus:ring-4 focus:ring-zinc-100/5 transition-butter placeholder:text-zinc-900"
+                placeholder="·····"
               />
             </div>
             
-            {error && (
-              <p className="text-red-400 text-sm font-medium text-center">{error}</p>
-            )}
+            {error && <p className="text-xs font-semibold text-red-500 text-center">{error}</p>}
 
-            <Button
-              onClick={() => handleReceive()}
-              disabled={code.length !== 5 || isLoading}
-              className="w-full h-14 bg-white hover:bg-gray-200 text-black font-semibold rounded-xl text-lg transition-all flex items-center justify-center"
+            <button
+                onClick={() => handleReceive()}
+                disabled={code.length !== 5 || isLoading}
+                className="w-full h-14 bg-zinc-50 text-zinc-950 disabled:opacity-20 font-bold rounded-xl flex items-center justify-center transition-butter active:scale-[0.98]"
             >
-              <AlignLeft className="mr-2 h-5 w-5" />
-              {isLoading ? "Validating Code..." : "Access Text"}
-            </Button>
+                {isLoading ? <Loader2 size={20} className="animate-spin" /> : <AlignLeft size={20} className="mr-2.5" />}
+                Access Data
+            </button>
           </div>
         </div>
       ) : (
-        <div className="bg-[#111] border border-gray-800 rounded-3xl p-8 relative overflow-hidden group shadow-2xl">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 mb-8 pb-6 border-b border-gray-800">
-             <div className="flex items-center space-x-6">
-                <div className="w-14 h-14 bg-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center font-bold tracking-widest font-mono select-all">
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 pb-6 border-b border-zinc-900">
+             <div className="flex items-center space-x-5">
+                <div className="min-w-[108px] h-14 px-4 bg-zinc-50 text-zinc-950 rounded-xl flex items-center justify-center font-bold font-mono text-lg tracking-[0.18em]">
                   {currentCode}
                 </div>
                 <div>
-                   {timeLeft && (
-                     <div className="flex items-center text-orange-400 text-sm font-medium bg-orange-500/10 px-3 py-1.5 rounded-full">
-                       <Clock size={14} className="mr-2 animate-pulse"/>
-                       Expires in {timeLeft}
-                     </div>
-                   )}
+                   <p className="text-[11px] font-bold uppercase text-zinc-500 mb-1">Snippet ID</p>
+                   <div className="flex items-center text-zinc-100 text-xs font-bold">
+                     <Clock size={12} className="mr-2 text-zinc-500"/>
+                     {timeLeft}
+                   </div>
                 </div>
              </div>
 
              <div className="flex items-center space-x-3 w-full sm:w-auto">
-                <Button onClick={handleCopy} variant="outline" className="flex-1 sm:flex-none border-gray-700 hover:bg-white hover:text-black hover:border-white transition-all bg-transparent h-10">
-                   {isCopied ? <CheckCircle2 size={16} className="mr-2" /> : <Copy size={16} className="mr-2" />}
-                   {isCopied ? "Copied" : "Copy text"}
-                </Button>
+                <button onClick={handleCopy} className="flex-1 sm:flex-none border border-zinc-800 bg-zinc-900/50 hover:bg-zinc-900 text-zinc-400 hover:text-zinc-100 px-6 h-11 rounded-xl text-[13px] font-bold transition-butter">
+                   {isCopied ? "Copied" : "Copy Content"}
+                </button>
                 {isEditing ? (
-                  <Button onClick={handleSave} disabled={isSaving} className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 h-10 transition-all text-white font-medium">
-                     <Save size={16} className="mr-2"/>
-                     {isSaving ? "Saving..." : "Save Edits"}
-                  </Button>
+                  <button onClick={handleSave} disabled={isSaving} className="flex-1 sm:flex-none bg-zinc-50 text-zinc-950 h-11 rounded-xl text-[13px] font-bold px-8 transition-butter active:scale-95 flex items-center justify-center">
+                     {isSaving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} className="mr-2" />}
+                     Save
+                  </button>
                 ) : (
-                  <Button onClick={() => setIsEditing(true)} className="flex-1 sm:flex-none bg-white hover:bg-gray-200 text-black h-10 transition-all font-medium">
-                     Edit text
-                  </Button>
+                  <button onClick={() => setIsEditing(true)} className="flex-1 sm:flex-none bg-zinc-50 text-zinc-950 h-11 rounded-xl text-[13px] font-bold px-8 transition-butter active:scale-95">
+                     Edit
+                  </button>
                 )}
              </div>
           </div>
 
-          {/* Editor */}
-          <div className="relative">
-             <Textarea
-               value={text}
-               onChange={(e) => setText(e.target.value)}
-               readOnly={!isEditing}
-               className={`min-h-[400px] w-full bg-black border ${isEditing ? 'border-blue-500 focus:ring-1 focus:ring-blue-500' : 'border-gray-800'} text-white rounded-xl p-6 text-lg focus:outline-none transition-all resize-y font-mono leading-relaxed`}
-             />
-          </div>
+          <Textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            readOnly={!isEditing}
+            className={`min-h-[500px] w-full bg-black border ${isEditing ? 'border-zinc-100' : 'border-zinc-800'} text-zinc-300 rounded-2xl p-10 text-lg focus:outline-none transition-butter resize-y font-mono leading-relaxed selection:bg-zinc-800`}
+          />
 
-          <div className="mt-8 flex justify-center">
-             <button onClick={() => { setText(""); setCode(""); setCurrentCode(""); setExpiresAt(null); setIsEditing(false); setError(""); }} className="text-gray-500 hover:text-white transition-colors text-sm font-medium pb-1 border-b border-transparent hover:border-white">
-                Input a different code
+          <div className="flex justify-center pt-10">
+             <button onClick={() => { setText(""); setCode(""); setCurrentCode(""); setExpiresAt(null); setIsEditing(false); setError(""); }} className="text-zinc-500 hover:text-zinc-100 text-[11px] font-bold uppercase tracking-widest border-b border-zinc-900 pb-1 transition-colors">
+                Access New Code
              </button>
           </div>
-
         </div>
       )}
     </div>
@@ -231,12 +220,8 @@ function TextReceiver() {
 
 export default function ReceivePage() {
   return (
-    <div className="min-h-screen bg-black text-white px-4 sm:px-6 md:p-8 font-sans flex flex-col items-center">
-       {/* Background effect */}
-       <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at center, #1e3a8a 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[60vw] h-[50vh] bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
-
-       <Suspense fallback={<div className="mt-20 text-gray-500 animate-pulse">Loading interface...</div>}>
+    <div className="min-h-[100dvh] bg-zinc-950 py-12 flex flex-col items-center">
+       <Suspense fallback={<div className="mt-20 text-zinc-500 font-bold animate-pulse text-[11px] uppercase tracking-widest">Loading...</div>}>
          <TextReceiver />
        </Suspense>
     </div>

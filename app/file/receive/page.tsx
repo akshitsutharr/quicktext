@@ -3,9 +3,9 @@
 import { useState, Suspense, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { ArrowLeft, Download, FileBox, AlertCircle } from "lucide-react"
+import { ArrowLeft, Download, FileBox, AlertCircle, Loader2 } from "lucide-react"
 import { getSharedFiles } from "@/app/actions/fileActions"
+import { toast } from "sonner"
 
 type SharedFile = {
   file_name: string
@@ -31,22 +31,21 @@ function FileReceiver() {
 
   const handleFetchFile = async () => {
     if (code.length !== 5) {
-      setError("Please enter a valid 5-digit code")
+      setError("Input 5-character share key")
       return
     }
-
     setIsLoading(true)
     setError("")
-
     try {
       const data = await getSharedFiles(code)
       if (data && data.length > 0) {
         setFileDetails(data)
+        toast.success("Objects retrieved")
       } else {
-        setError("Files not found or have expired")
+        setError("Invalid Key or Expired Share")
       }
     } catch (e) {
-      setError("An error occurred while fetching the file")
+      setError("Protocol mismatch. Try again.")
     } finally {
       setIsLoading(false)
     }
@@ -60,35 +59,26 @@ function FileReceiver() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
   }
 
-  const getTimeLeft = (expiresAt: string) => {
-    const diff = new Date(expiresAt).getTime() - new Date().getTime()
-    if (diff <= 0) return "Expired"
-    const m = Math.floor(diff / 1000 / 60)
-    return `${m} minutes left`
-  }
-
   const totalSize = (fileDetails || []).reduce((sum, file) => sum + file.size, 0)
-  const expiryLabel = fileDetails?.[0] ? getTimeLeft(fileDetails[0].expires_at) : ""
 
   return (
-    <div className="max-w-xl mx-auto mt-8 relative z-10 w-full px-4">
-      <Link href="/" className="inline-flex items-center text-gray-400 hover:text-white transition-colors mb-8 group">
-        <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+    <div className="max-w-xl mx-auto w-full px-6 animate-reveal">
+      <Link href="/" className="inline-flex items-center text-zinc-500 hover:text-zinc-100 transition-colors mb-12 group text-sm font-medium">
+        <ArrowLeft size={16} className="mr-2 group-hover:-translate-x-1 transition-transform" />
         Back to Home
       </Link>
 
-      <h1 className="text-3xl sm:text-4xl font-bold mb-2 tracking-tight">Receive File</h1>
-      <p className="text-gray-400 mb-8">Enter the 5-digit file code to access and download securely shared files.</p>
+      <div className="mb-12">
+        <h1 className="text-4xl font-bold tracking-tighter text-zinc-100 italic">Retrieve <span className="text-zinc-500 not-italic">Objects.</span></h1>
+        <p className="text-zinc-500 mt-2 font-medium">Temporary encrypted file streams.</p>
+      </div>
 
       {!fileDetails ? (
-        <div className="bg-[#111] border border-gray-800 rounded-3xl p-6 sm:p-8">
-          <div className="space-y-6">
-            <div>
-              <label htmlFor="code" className="block text-sm font-medium text-gray-400 mb-2">
-                5-Digit Share Code
-              </label>
+        <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-10">
+          <div className="space-y-8">
+            <div className="space-y-3">
+              <label className="text-[11px] font-bold uppercase tracking-widest text-zinc-500">Access Key</label>
               <input
-                id="code"
                 type="text"
                 maxLength={5}
                 value={code}
@@ -96,64 +86,56 @@ function FileReceiver() {
                   setCode(e.target.value.toUpperCase())
                   setError("")
                 }}
-                className="w-full bg-black border border-gray-700 text-white rounded-xl px-4 py-4 text-center text-4xl font-mono tracking-[0.5em] focus:outline-none focus:border-blue-500 transition-colors uppercase placeholder:text-gray-800"
-                placeholder="XXXXX"
+                onKeyDown={(e) => e.key === "Enter" && handleFetchFile()}
+                className="w-full bg-black border border-zinc-800 rounded-xl py-5 text-center text-5xl font-bold font-mono tracking-[0.2em] text-zinc-100 focus:outline-none focus:ring-4 focus:ring-zinc-100/5 transition-butter placeholder:text-zinc-900"
+                placeholder="·····"
               />
             </div>
             
-            {error && (
-              <div className="flex items-center text-red-400 text-sm p-3 bg-red-400/10 rounded-xl">
-                 <AlertCircle size={16} className="mr-2"/>
-                 <span>{error}</span>
-              </div>
-            )}
+            {error && <p className="text-xs font-semibold text-red-500 text-center uppercase tracking-widest">{error}</p>}
 
-            <Button
+            <button
               onClick={handleFetchFile}
               disabled={code.length !== 5 || isLoading}
-              className="w-full h-14 bg-white hover:bg-gray-200 text-black font-semibold rounded-xl text-lg transition-all"
+              className="w-full h-14 bg-zinc-50 text-zinc-950 disabled:opacity-20 font-bold rounded-xl flex items-center justify-center transition-butter active:scale-[0.98] hover:bg-white"
             >
-              {isLoading ? "Searching..." : "Access File"}
-            </Button>
+              {isLoading ? <Loader2 size={20} className="animate-spin" /> : "Authorize Access"}
+            </button>
           </div>
         </div>
       ) : (
-        <div className="bg-[#111] border border-gray-800 rounded-3xl p-8 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none" />
+        <div className="space-y-6">
+          <div className="p-8 bg-zinc-900/50 border border-zinc-800 rounded-3xl relative overflow-hidden">
+             <div className="flex items-center space-x-5 mb-8">
+                <div className="w-14 h-14 bg-zinc-50 text-zinc-950 rounded-xl flex items-center justify-center shadow-xl">
+                   <FileBox size={24} />
+                </div>
+                <div>
+                   <h3 className="text-xl font-bold text-zinc-100 tracking-tight italic">{fileDetails.length} Object{fileDetails.length !== 1 ? 's' : ''} Synced</h3>
+                   <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest">{formatSize(totalSize)} total payload</p>
+                </div>
+             </div>
 
-          <div className="flex items-start space-x-6 mb-6">
-            <div className="w-16 h-16 bg-blue-500/20 text-blue-400 rounded-2xl flex items-center justify-center shrink-0">
-               <FileBox size={32} />
-            </div>
-            <div className="overflow-hidden">
-               <h3 className="text-2xl font-bold truncate pr-4 text-white mb-1">{fileDetails.length} {fileDetails.length === 1 ? "File" : "Files"} Ready</h3>
-               <div className="flex items-center space-x-3 text-sm text-gray-400 mb-6 font-medium">
-                  <span className="bg-gray-800 px-3 py-1 rounded-full text-gray-300">{formatSize(totalSize)}</span>
-                  <span className="flex items-center text-amber-500/90 text-xs">
-                     <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse mr-2" />
-                     Expires in {expiryLabel}
-                  </span>
-               </div>
-            </div>
+             <div className="space-y-3">
+                {fileDetails.map((file, index) => (
+                    <a key={index} href={file.file_url} target="_blank" rel="noopener noreferrer" className="block w-full group">
+                        <div className="flex items-center justify-between p-4 bg-black border border-zinc-800 rounded-xl hover:border-zinc-100 transition-butter">
+                            <div className="min-w-0 pr-4">
+                                <p className="text-xs font-bold text-zinc-100 truncate italic">{file.file_name}</p>
+                                <p className="text-[10px] text-zinc-500 font-bold uppercase">{formatSize(file.size)}</p>
+                            </div>
+                            <div className="w-9 h-9 bg-zinc-900 text-zinc-100 rounded-lg flex items-center justify-center group-hover:bg-zinc-50 group-hover:text-zinc-950 transition-colors">
+                                <Download size={16} />
+                            </div>
+                        </div>
+                    </a>
+                ))}
+             </div>
+             
+             <button onClick={() => setFileDetails(null)} className="mt-10 text-[11px] font-bold text-zinc-500 hover:text-zinc-100 uppercase tracking-widest border-b border-zinc-800 hover:border-zinc-100 pb-1 transition-all block mx-auto">
+                Access another code
+             </button>
           </div>
-
-          <div className="space-y-3">
-            {fileDetails.map((file, index) => (
-              <a key={`${file.file_name}-${index}`} href={file.file_url} target="_blank" rel="noopener noreferrer" className="block w-full">
-                <Button className="w-full h-14 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 transition-all flex items-center justify-between px-4">
-                  <span className="truncate text-left pr-3">{file.file_name}</span>
-                  <span className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-blue-100/90">{formatSize(file.size)}</span>
-                    <Download size={18} />
-                  </span>
-                </Button>
-              </a>
-            ))}
-          </div>
-          
-          <button onClick={() => setFileDetails(null)} className="mt-6 text-sm text-gray-500 hover:text-white transition-colors block text-center w-full focus:outline-none">
-            Access a different code
-          </button>
         </div>
       )}
     </div>
@@ -162,12 +144,8 @@ function FileReceiver() {
 
 export default function ReceiveFilePage() {
   return (
-    <div className="min-h-screen bg-black text-white p-4 sm:p-6 md:p-8 font-sans flex flex-col items-center">
-       {/* Background effect */}
-       <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at center, #3f3f46 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
-       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[60vw] h-[50vh] bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
-
-       <Suspense fallback={<div className="mt-20 text-gray-500 animate-pulse">Loading interface...</div>}>
+    <div className="min-h-[100dvh] bg-zinc-950 py-12 flex flex-col items-center">
+       <Suspense fallback={<div className="mt-20 text-zinc-500 font-bold animate-pulse text-[11px] uppercase tracking-widest">Establishing Link...</div>}>
          <FileReceiver />
        </Suspense>
     </div>
