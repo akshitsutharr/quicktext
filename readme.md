@@ -24,20 +24,19 @@
 
 ## 📸 Platform Sneak Peek
 
-<div align="center">
-  <table>
-    <tr>
-      <td><img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/scr1.png" alt="Dashboard" width="250" style="border-radius:10px;"/></td>
-      <td><img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/scr2.png" alt="File Upload" width="250" style="border-radius:10px;"/></td>
-      <td><img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/scr3.png" alt="Receiving File" width="250" style="border-radius:10px;"/></td>
-    </tr>
-    <tr>
-      <td><img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/src4.png" alt="URL Shortener" width="250" style="border-radius:10px;"/></td>
-      <td><img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/src5.png" alt="QR Code Generation" width="250" style="border-radius:10px;"/></td>
-      <td><img src="https://raw.githubusercontent.com/akshitsutharr/quicktext/main/public/src6.png" alt="Text Editing" width="250" style="border-radius:10px;"/></td>
-    </tr>
-  </table>
-</div>
+<p align="center">
+  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/d4klhzs1rjl2gt1pfq0h.png" width="45%"/>
+  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/a2vktsgj0l20m7h6co7v.png" width="45%"/>
+</p>
+
+<p align="center">
+  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/2gep3k0u0rbnrani5idc.png" width="45%"/>
+  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ex7o1ltqyelao7pgzvbi.png" width="45%"/>
+</p>
+
+<p align="center">
+  <img src="https://dev-to-uploads.s3.amazonaws.com/uploads/articles/3ebi7vmxud9zrgbh3476.png" width="60%"/>
+</p>
 
 ---
 
