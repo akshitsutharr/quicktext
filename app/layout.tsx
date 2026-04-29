@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Outfit } from "next/font/google"
+import Script from "next/script"
 import "./globals.css"
 
 const outfit = Outfit({ subsets: ["latin"] })
@@ -32,55 +33,57 @@ export const metadata: Metadata = {
     "real-time sharing",
   ],
   alternates: {
-    canonical: "/",
+    canonical: siteUrl,
   },
+
   authors: [{ name: "Akshit Suthar", url: siteUrl }],
   creator: "Akshit Suthar",
   publisher: "QuickText",
   category: "technology",
-  referrer: "origin-when-cross-origin",
+
   robots: {
     index: true,
     follow: true,
-    nocache: false,
     googleBot: {
       index: true,
       follow: true,
-      "max-video-preview": -1,
       "max-image-preview": "large",
       "max-snippet": -1,
     },
   },
+
   openGraph: {
     title: "QuickText | Fast, Temporary Text, File & URL Sharing",
     description:
       "Share text, files, and links instantly with short codes. No signup, real-time, and built for seamless cross-device transfer.",
-    url: "/",
+    url: siteUrl,
     siteName: "QuickText",
     locale: "en_US",
+    type: "website",
     images: [
       {
-        url: "/og-image.png",
+        url: `${siteUrl}/og-image.png`,
         width: 1200,
         height: 630,
-        alt: "QuickText preview - text, file and link sharing",
+        alt: "QuickText preview",
       },
     ],
-    type: "website",
   },
+
   twitter: {
     card: "summary_large_image",
     title: "QuickText | Instant Text, File & URL Sharing",
     description:
-      "Temporary, anonymous sharing for text, files, and URLs. Fast, secure, and cross-device.",
-    images: ["/og-image.png"],
+      "Temporary, anonymous sharing for text, files, and URLs.",
+    images: [`${siteUrl}/og-image.png`],
   },
+
   icons: {
-    icon: [{ url: "/favicon.png", type: "image/png" }],
-    shortcut: ["/favicon.png"],
-    apple: [{ url: "/favicon.png" }],
+    icon: "/favicon1.png",
+    shortcut: "/favicon1.png",
+    apple: "/favicon1.png",
   },
-};
+}
 
 export default function RootLayout({
   children,
@@ -89,11 +92,25 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <head>
-          <link rel="icon" href="/favicon.png" sizes="any" />
-          <meta name="viewport" content="width=device-width, initial-scale=1" />
-      </head>
-      <body className={outfit.className + " min-h-screen bg-black text-white antialiased"}>
+      <body
+        className={
+          outfit.className +
+          " min-h-screen bg-black text-white antialiased"
+        }
+      >
+        <Script
+          id="structured-data"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              name: "QuickText",
+              url: siteUrl,
+            }),
+          }}
+        />
+
         {children}
       </body>
     </html>
