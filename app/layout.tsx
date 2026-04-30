@@ -6,7 +6,7 @@ import "./globals.css"
 
 const outfit = Outfit({ subsets: ["latin"] })
 
-const siteUrl = "https://quicktextt.vercel.app"
+const siteUrl = "https://quicktextt.netlify.app"
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
